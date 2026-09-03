@@ -71,12 +71,20 @@ select, input { padding: 10px; border: 1px solid #ccc; border-radius: 6px; font-
 @keyframes shake { 0%,100%{transform:translateX(0);} 25%{transform:translateX(-5px);} 75%{transform:translateX(5px);} }
 
 /* 縣市進度 (成就地圖) */
-.map-wrap { max-width: 480px; margin: 0 auto; background: #f5faff; border-radius: 16px; padding: 10px; box-shadow: 0 2px 8px rgba(0,0,0,0.06); }
-#tw-map { width: 100%; height: auto; display: block; }
-.county-shape { stroke: #607d8b; stroke-width: 1.2; cursor: pointer; transition: filter 0.2s, stroke-width 0.2s; }
-.county-shape:hover { filter: brightness(1.08); stroke-width: 2.2; }
+.map-wrap { max-width: 480px; margin: 0 auto; background: #f5faff; border-radius: 16px; padding: 10px; box-shadow: 0 2px 8px rgba(0,0,0,0.06); position: relative; touch-action: none; overflow: hidden; }
+#tw-map { width: 100%; height: auto; display: block; cursor: grab; }
+#tw-map.dragging { cursor: grabbing; }
+.map-zoom-ctrls { position: absolute; top: 18px; right: 18px; z-index: 10; display: flex; flex-direction: column; gap: 6px; }
+.map-zoom-ctrls button { width: 32px; height: 32px; border-radius: 50%; border: 1px solid #b0bec5; background: rgba(255,255,255,0.92); font-size: 1rem; cursor: pointer; box-shadow: 0 1px 4px rgba(0,0,0,0.15); line-height: 1; }
+.map-zoom-ctrls button:hover { background: #fff; }
+.hover-info { max-width: 480px; margin: 0 auto 10px; text-align: center; font-size: 0.85rem; color: #607d8b; min-height: 1.3em; font-weight: bold; }
+.hover-info.active { color: var(--primary); }
+.county-shape { stroke: #607d8b; stroke-width: 1.2; cursor: pointer; transition: filter 0.15s; }
+.county-shape:hover { filter: brightness(1.1); }
 .county-shape.lit { stroke: var(--gold); stroke-width: 1.6; filter: drop-shadow(0 0 4px rgba(212,175,55,0.85)); }
-.county-label { font-size: 10px; fill: #263238; text-anchor: middle; pointer-events: none; font-weight: bold; paint-order: stroke; stroke: #fff; stroke-width: 2px; stroke-linejoin: round; }
+.county-shape.inset { stroke-width: 1.8; stroke-dasharray: 3,2; }
+.county-label { font-size: 10px; fill: #263238; text-anchor: middle; pointer-events: none; font-weight: bold; paint-order: stroke; stroke: #fff; stroke-width: 2.5px; stroke-linejoin: round; }
+.county-label.inset-label { font-size: 15px; }
 .map-legend { display: flex; justify-content: center; gap: 18px; margin: 12px auto 0; flex-wrap: wrap; font-size: 0.8rem; color: #555; }
 .legend-item { display: flex; align-items: center; gap: 6px; }
 .legend-swatch { width: 14px; height: 14px; border-radius: 3px; display: inline-block; border: 1px solid #999; }
@@ -182,7 +190,13 @@ input:checked + .slider:before { transform: translateX(22px); }
 
     <div id="tab-ach" class="section">
         <div class="ach-summary" id="ach-summary"></div>
+        <div class="hover-info" id="hover-info">👆 將手指或滑鼠移到地圖上查看縣市進度</div>
         <div class="map-wrap">
+            <div class="map-zoom-ctrls">
+                <button type="button" onclick="mapZoom(0.8)">➕</button>
+                <button type="button" onclick="mapZoom(1.25)">➖</button>
+                <button type="button" onclick="mapZoomReset()">⟲</button>
+            </div>
             <svg id="tw-map" viewBox="0 0 670 720" xmlns="http://www.w3.org/2000/svg"></svg>
         </div>
         <div class="map-legend">
@@ -503,28 +517,28 @@ const rawPlacesData = [
     ["南投縣","武界","Vogai","武界因位處泰雅族與布農族早年交戰後議和劃定的獵域界線而得名，另一說源自布農語「Vogai」，意指翻越山嶺或界線。","","武界地名由來主要有兩種說法：第一種說法指出，這裡是南投信義鄉與仁愛鄉的交界地帶，早年北側泰雅族與南側布農族時常因爭奪獵域而發生衝突，雙方經過協調後，議定以干卓萬山為界、互不越界，這條劃定的界線正好通過武界現址，因而得名「武界」；第二種說法則認為地名源自布農語「Buqaiz」（也拼寫作Vogai或Bogai）的音譯，意指「翻越某物」，例如翻過一座山頭或跨越一條界線，恰好呼應了武界地處山區要衝、族群往來必經之地的地理特徵。1919年，台灣總督府為統一管理布農族卓社群，推行「集團移住」政策，將原本分散各處的卓社群部落族人集中遷移到濁水溪沖積平原上安置，形成今日的武界部落（法治村），是台灣布農族分布最北的一支，如今武界因鄰近武界壩與雲龍瀑布，是南投縣深具原始風貌的部落型觀光景點。"],
 
     // --- 【雲林縣】 ---
-    ["雲林縣","斗六市","斗六門","洪雅族斗六門社。"],
-    ["雲林縣","斗南鎮","他里霧","洪雅族他里霧社。"],
-    ["雲林縣","虎尾鎮","五間厝","早期僅五間草厝。"],
-    ["雲林縣","西螺鎮","西螺","巴布薩族西螺社。"],
-    ["雲林縣","土庫鎮","塗庫","道路泥濘如塗，地勢低如庫。"],
-    ["雲林縣","北港鎮","笨港","平埔族語 Ponkan，意海邊。"],
-    ["雲林縣","古坑鄉","庵古坑","醃菜缸（庵古）之坑。"],
-    ["雲林縣","大埤鄉","大埤","早期有紅毛埤大池塘。"],
-    ["雲林縣","莿桐鄉","莿桐巷","早期多莿桐樹。"],
-    ["雲林縣","林內鄉","林內","位於森林之內。"],
-    ["雲林縣","二崙鄉","二崙","有兩座沙丘（崙）。"],
-    ["雲林縣","崙背鄉","崙背","位於沙崙之背後。"],
-    ["雲林縣","麥寮鄉","麥寮","早期農民在船頭搭寮種麥。"],
-    ["雲林縣","東勢鄉","東勢厝","位於海口部落之東。"],
-    ["雲林縣","褒忠鄉","埔姜崙","林爽文事件後改褒忠。"],
-    ["雲林縣","台西鄉","海口","位於出海口，戰後改台西。"],
-    ["雲林縣","元長鄉","元掌","傳說傅元掌來此開墾。"],
-    ["雲林縣","四湖鄉","四湖","有四個大水池。"],
-    ["雲林縣","口湖鄉","象鼻湖","地形像象鼻的湖。"],
-    ["雲林縣","水林鄉","水漆林","早期多水漆樹。"],
-    ["雲林縣","劍湖山","珠螺山","傳說鄭成功插劍求水。"],
-    ["雲林縣","石榴","石榴班","早期採石砂石之地，稱石榴班。"],
+    ["雲林縣","斗六市","斗六門","斗六舊稱斗六門，源自平埔族洪雅族斗六社，一說因族人狩獵慶賀的呼聲而得名，一說因地處諸羅縣東方門戶而加「門」字。","","斗六舊稱「斗六門」，地名由來主要有兩種說法：一說源自平埔族洪雅族「斗六社」（原居於今斗六市柴裡一帶，即今三興里）的社名音譯；另一說則帶有生動的民俗色彩，指原住民族人出獵捕獲山鹿時，會發出「ㄉㄨ ㄌㄨ ㄇㄣˋ」的歡呼慶賀聲，先民便以此擬聲詞為地方命名。至於「門」字的由來，一般認為是因斗六門地處諸羅縣（今嘉義）東側進入內山地帶的門戶要衝，地勢險要、自古為兵家必爭之地，因而加上「門」字強調其關口地位，後來才簡化去除，成為今日的「斗六」。光緒13年（1887年）台灣建省，首任巡撫劉銘傳原擬在林圮埔（今南投竹山）雲林坪設縣治，因清水溪、濁水溪夏秋氾濫交通不便，光緒19年將縣治遷至斗六門，「雲林」之名卻因此隨縣治沿用下來，如今斗六市是雲林縣政府所在地，也是全縣唯一的市轄區。"],
+    ["雲林縣","斗南鎮","他里霧","斗南原稱他里霧，源自洪雅族「他里霧社」音譯，意指蒼莽草原，1920年因位居斗六之南而改稱斗南。","","斗南舊稱「他里霧」，源自平埔族洪雅族「他里霧社」（Tarubu或Dalivoe）的社名音譯，平埔語原意為「蒼莽草原」，反映當地早期未墾荒野的地貌特徵。根據荷蘭統治時期文獻記載，平埔族在雲林縣境內曾設有五個社，斗南地區便占有兩社：他里霧社與猴悶社（今將軍里溫厝角），其中他里霧社人數最多，原址即在今斗南市區與舊社里一帶，康熙23年（1684年）《福建通志》台灣府三縣圖中已見他里霧社的記載。1920年，日本殖民政府推行地方行政改制，因這一帶位於斗六以南，遂將「他里霧」改稱「斗南」；饒富趣味的是，日本本州青森縣陸奧市剛好也有一處相同讀音的「斗南藩」（となみはん），部分文獻認為這項巧合也促成了改名的選擇。斗南地處雲林縣交通地理中心，因縱貫鐵路、公路與糖廠小火車交會，長期是雲林對外的重要交通門戶。"],
+    ["雲林縣","虎尾鎮","五間厝","虎尾舊稱五間厝，因清代僅有五棟草厝而得名，原稱「后尾」因與「虎」台語發音相近而訛傳為虎尾。","","虎尾地名的演變頗為曲折：清康熙56年（1717年），諸羅縣在此設「大坵田一堡」，因當地地形起伏如丘陵，最初稱為「大崙腳」；乾隆24年（1756年），福建人郭六才前來大崙腳開墾，在東北邊俗稱「后尾」之處興建五間草寮定居，這處聚落因而被稱為「五間厝」。日治時期，因當地台語發音的「后」與「虎」十分相近，加上日本人不熟悉台語、當地居民也未加以辨明澄清，「后尾」便逐漸被誤傳、書寫為「虎尾」，這種因語音訛傳而流傳至今的地名演變過程，是台灣地名史上相當特殊的案例。明治40年（1907年），大日本製糖株式會社選定五間厝設立糖廠，並設「五間厝驛」運輸蔗糖，1920年隨行政區改制正式定名「虎尾」，車站也隨之更名虎尾驛。如今虎尾因保存完整的日治糖廠建築群與郡役所等歷史建物，是雲林縣重要的歷史文化與教育重鎮。"],
+    ["雲林縣","西螺鎮","西螺社","西螺源自平埔族巴布薩族「西螺社」，相傳因地形似田螺，與濁水溪對岸北斗（東螺）協議分稱西螺、東螺。","","西螺地名源自平埔族巴布薩族「西螺社」，該族人自稱居住地為「Soreau」。相傳三百多年前，這一帶的地形輪廓神似田螺，而濁水溪對岸的北斗一帶恰好也呈現類似的地形樣貌，兩地墾民於是協議，將位於溪流南端的一方稱為「西螺」，北端（今北斗）則稱為「東螺」，這種依相似地形、輔以方位區分兩地地名的方式，在台灣地名史上相當少見。西螺又有「螺陽」的雅稱，一說是依「北辰南陽」的方位命名，因西螺恰好位於濁水溪南畔；另一說則是開拓先民為追思福建原鄉「螺陽」（今福建惠安一帶）而取名，寄託思鄉之情。西螺因地處濁水溪畔，土壤肥沃，是台灣重要的蔬菜（尤其是西螺醬油與濁水米）產地，戰後興建的西螺大橋一度是東亞最長的橋樑，是連接雲林、彰化兩地的重要地標。"],
+    ["雲林縣","土庫鎮","塗庫","土庫舊稱塗庫，因是鹿港通北港必經之地，道路狹隘泥濘如穿「土褲」而得名，另一說源自洪雅族猴悶社自稱「土庫」音譯。","","土庫舊稱「塗庫」，地名由來主要有兩種說法：第一種說法從交通地形著眼，指這一帶是清代鹿港通往北港的必經之路，沿線兩側地勢高聳、中央低窪，且道路特別狹隘，每逢下雨便泥濘不堪，行人通過時往往泥水沒過小腿，猶如穿著沾滿泥巴的「土褲」，因而得名「塗褲莊」，後轉為「塗庫」；第二種說法則認為，地名源自當地平埔族洪雅族「猴悶社」自稱「土庫」的音譯轉化，與地形描述無關。1920年，日本殖民政府推行地方行政改制，將「塗庫」正式改稱「土庫」，沿用至今。土庫鎮地處雲林縣中央地帶，因土壤肥沃，是重要的花生、蒜頭與蔬果產地，加上鄰近的順天宮媽祖信仰，是雲林縣海線與山線交界的重要商業市鎮之一。"],
+    ["雲林縣","北港鎮","笨港","北港舊稱笨港，因笨港溪氾濫將街市沖毀分為南北兩岸，北岸稱笨北港，簡稱北港，清代曾有「一府二笨三艋舺」之稱。","","北港舊稱「笨港」，這是台灣清領時期最重要的港口之一，享有「一府二笨三艋舺」的美譽，與台南府城、艋舺並列全台三大港市。「笨港」地名由來眾說紛紜，有一說認為源自平埔族語「Ponkan」的音譯，也有一說指當地多沙丘，形狀似「畚」箕而得名，古文獻中至少留下八種不同的地名解釋版本，至今仍無定論。乾隆15年（1750年），笨港溪（今北港溪）爆發山洪，將原本的笨港街沖毀，一分為二：溪南岸稱「笨南港」（簡稱南港，即今嘉義縣新港鄉南港村），溪北岸則稱「笨北港」，簡稱「北港」。其後因漳泉械鬥，漳州人另遷至北港東側的麻園寮居住，形成「新港」聚落（今嘉義新港鄉），這也是台灣「北港在南部、南港在北部」這個常令人困惑的地名謎題由來。北港朝天宮是全台歷史最悠久的媽祖廟之一，每年進香期間吸引數十萬信眾參與，是北港最重要的信仰與觀光資產。"],
+    ["雲林縣","古坑鄉","庵古坑","古坑舊稱庵古坑，一說因移民在坑谷種植菴瓜而得名，一說源自打鐵店主人恩愛故事「尪婆仔坑」，因不雅日治時期改稱庵古坑。","","古坑鄉舊稱「庵古坑」，地名由來流傳兩種說法：第一種說法認為，早期入墾者在坑谷地帶種植一種稱為「菴瓜」的作物，因而以此為地名；第二種說法則帶有民間故事色彩，相傳古時此地住著一對恩愛的打鐵夫婦，其住處因而被稱為「打鐵坑」，因鄉民羨慕這對夫妻鶼鰈情深，又稱此地為「尪婆仔坑」，日治時期官方認為這個稱呼不夠文雅，遂改稱「庵古坑」，「庵」字帶有溫暖古窩的意涵。1920年，地方行政改制時進一步簡化為「古坑」，沿用至今。古坑鄉因地處阿里山山脈西麓，海拔落差大、氣候與土壤條件類似巴西頂級咖啡產區，發展出享譽全台的「古坑咖啡」，加上境內知名遊樂園劍湖山世界的加持，讓這個源自坑谷地形與打鐵夫妻傳說的山區鄉鎮，成為雲林縣最具知名度的觀光鄉鎮之一。"],
+    ["雲林縣","大埤鄉","大埤頭","大埤舊稱大埤頭，一說因位於荷包連圳埤塘之頭而得名，一說因鄰近明末荷蘭人所建紅毛埤的頭頂位置而得名。","","大埤鄉舊稱「大埤頭」，地名由來主要有兩種說法：第一種說法指出，先民最初建村於灌溉水圳「荷包連圳」蓄水埤塘的源頭附近，這條水圳引倒孔溪之水向西北流向大埤頭匯入，因當地設有埤塘儲水，故稱「大埤頭」；第二種說法則追溯至明末荷蘭統治時期，指荷蘭人曾在大埤西北方興建一座蓄水埤塘「紅毛埤」（台灣民間慣以「紅毛」稱呼荷蘭人），而這處聚落恰好位於紅毛埤上游、埤塘頭頂的位置，居民便依此方位稱作「大埤頭庄」。無論何種說法為真，都反映了大埤鄉自清代以來便高度仰賴埤塘蓄水灌溉的農業發展背景。大埤鄉因土壤與氣候條件適宜，是台灣最重要的酸菜（大埤酸菜）產地，享有「酸菜的故鄉」美譽，每年生產的酸菜供應全台大部分市場需求。"],
+    ["雲林縣","莿桐鄉","莿桐巷","莿桐原稱莿桐巷，因清康熙年間漢人村莊一巷兩側多莿桐樹而得名，1920年簡化為莿桐。","","莿桐鄉地名由來相對直白，源自當地早期的自然植被景觀：清康熙年間，這一帶已形成漢人聚居的村莊，村內一條主要巷道的兩側恰好種植著大量莿桐樹，先民依此特徵，將這處聚落稱為「莿桐巷」，莿桐是一種樹幹帶刺、春季開紅花的豆科植物，在台灣多地皆有以此命名的地名案例。1920年，日本殖民政府推行地方行政改制，將「莿桐巷」簡化為「莿桐」，沿用至今。莿桐鄉地處濁水溪沖積平原，因土壤肥沃、水源充沛，是雲林縣重要的水稻、花生與蔬果產區，境內饒平村（舊稱樹子腳）因客家移民拓墾歷史，也保留部分客家文化痕跡，讓這個因莿桐樹巷得名的平原鄉鎮，兼具農業生產與族群多元的地方特色。"],
+    ["雲林縣","林內鄉","林內","林內因清朝以前是濃密如蔭的大片林野，閩人鄭萃徘率眾入墾後，因村莊建於森林之內而得名。","","林內鄉地名由來相對單純，這一帶在清代以前是林木蔥鬱、濃密如蔭的原始林野地帶。相傳來自福建漳浦的閩籍移民鄭萃徘，率眾前來此地開墾定居，在乾隆、嘉慶年間因協助平定地方民亂有功，獲得清廷封賞，家族從此在此傳家立業、人丁興旺，聚落人口逐漸集結成莊；由於這座村莊正是建立在原本茂密森林的內部，因而得名「林內」。林內鄉地處濁水溪出山口，是灌溉整個雲林平原的重要水利樞紐，境內的濁水溪引水工程與八堡圳系統，長期扮演彰雲平原農業命脈的角色；林內也是通往竹山、鹿谷等南投山區的交通門戶，鄰近的湖本村因螢火蟲生態保育聞名，是雲林縣重要的生態旅遊景點之一。"],
+    ["雲林縣","二崙鄉","二崙","二崙因聚落建於兩座沙丘（崙）之間而得名，舊稱義崙，因客語「義」與「二」同音而演變成今名。","","二崙鄉地名由來源自其地形特徵：這一帶因河流沖積作用，形成兩座相鄰的沙丘（閩南語稱「崙」），先民在這兩座沙丘之間建立聚落，因而得名「二崙」。二崙鄉境內另有舊稱「義崙」，這與早期入墾此地的客籍移民有關：客家話中「義」與「二」發音十分相近，因而「義崙」與「二崙」兩種寫法一度並存混用，後來才統一定名為「二崙」，這種因客語發音相近而產生地名混用現象的案例，在雲林縣崙背、二崙一帶的客家移民聚落中並不罕見。二崙鄉地處濁水溪沖積平原，因土壤肥沃、氣候溫和，是台灣重要的蔬菜與水稻產區，尤其以九層塔、韭菜花等特色蔬菜聞名，境內詔安客家文化保存完整，是雲林縣少數仍保留客家語言與習俗的鄉鎮之一。"],
+    ["雲林縣","崙背鄉","崙背","崙背因聚落建於一座沙丘背後而得名，先民依沙丘南北兩面分別稱「崙前」「崙背」，本鄉多屬沙丘北側而得名崙背。","","崙背鄉地名由來源自當地沙丘地形的相對位置：開拓先民為躲避強勁的東北季風與洪水侵襲，選擇在地勢較高的沙丘偏南地帶優先定居，隨著人口增加，逐漸以這座沙丘為分界，將沙丘南面已開發的聚落稱為「崙前」，後續移居到沙丘北面的村莊則稱為「崙背」，「崙」即指沙丘，「背」則表示位於沙丘背面之意。由於崙背鄉境內大部分聚落偏屬沙丘北側區域，因而以「崙背」作為整個鄉的名稱。崙背鄉與鄰近的二崙鄉同屬雲林縣詔安客家移民的主要聚居地，客家語言與傳統習俗保存相對完整，加上濁水溪沖積帶來的肥沃土壤，是重要的蔬菜與水稻產地，境內每年舉辦的詔安客家文化活動，也讓這個因沙丘地形得名的平原鄉鎮，成為雲林縣客家文化的重要據點。"],
+    ["雲林縣","麥寮鄉","麥寮","麥寮因清代墾殖初期有農民種植小麥、搭建草寮居住而得名。","","麥寮鄉地名由來相對單純直白，據傳清代墾殖初期，先民在這片濱海荒地上試種小麥等雜糧作物，並在田間搭建簡易草寮作為看顧作物與暫時棲身之用，這片以種麥、搭寮為特徵的聚落，因而得名「麥寮」，這種依作物與臨時建物命名地方的方式，在台灣沿海拓墾聚落中相當常見。麥寮鄉地處濁水溪出海口北側，因地勢低平、土壤含鹽分較高，早期農業發展條件較為嚴苛，居民多兼營漁業與耐鹽作物種植。1990年代，台塑六輕工業區選定在麥寮鄉外海填海造陸興建，帶動麥寮從傳統農漁業鄉鎮迅速轉型為雲林縣重要的石化工業重鎮，也讓這個源自種麥搭寮拓墾史的濱海鄉鎮，在產業發展上出現戲劇性的轉變。"],
+    ["雲林縣","東勢鄉","東勢厝","東勢因黃姓家族遷居於海豐港東側聚落，或因先民從海豐港登陸後在其東方立庄而得名，「勢」取閩南語方位與人旺勢振之意。","","東勢鄉地名由來有兩種說法：其一指出，清乾隆13年（1748年），一支黃姓家族遷入此地，隨著人口增加逐漸形成聚落，居民便以聚落所在的東側部分稱為「東勢厝」；另一說法則認為，早期移民多由「海豐港」（今地名已不存，位於東勢鄉西側沿海）登陸開墾，因這處聚落恰好位於海豐港的東方，故稱「東勢」，「勢」字在閩南語中除有方位之意，也隱含著人丁興旺、氣勢振興的吉祥寓意。東勢鄉地處雲林縣沿海平原地帶，因鄰近台西、麥寮等海口鄉鎮，同樣以農漁業為主要經濟活動，境內廣植花生、甘藷等耐旱耐鹽作物，是雲林縣典型的濱海農業鄉鎮之一。"],
+    ["雲林縣","褒忠鄉","埔姜崙","褒忠原稱埔姜崙，因林爽文事件時，當地生員張源懃率鄉勇力抗叛軍有功，獲清廷賜「褒忠」二字為庄名。","","褒忠鄉舊稱「埔姜崙」，因最初移民在遍生埔姜（一種灌木植物）的沙丘（崙）上建立聚落而得名。乾隆51年（1786年）林爽文事件爆發，這場清代台灣規模最大的民變席捲全台，當地一位名為張源懃的生員（秀才），號召鄉勇數千人奮力抵抗叛軍侵擾，堅守鄉里數月之久，屢次擊退林爽文部隊的攻勢，事後更協助官府平定其他地區的動亂。事平之後，清廷除了封官獎賞張源懃之外，更特別賜予其居住地「褒忠」二字作為庄名，以表彰當地軍民對朝廷的忠誠貢獻，「埔姜崙」自此改稱「褒忠」。日治時期一度廢除褒忠舊名、恢復原稱埔姜崙，直到台灣光復後，才重新以「褒忠」定為鄉名，沿用至今，是雲林縣少數直接源自清代平亂事蹟、由官方賜名的鄉鎮地名。"],
+    ["雲林縣","台西鄉","海口厝","台西原稱海口厝，因地處舊虎尾溪出海口而得名，戰後因位於台灣島西側，與台北、台南、台東、台中相對稱而改名台西。","","台西鄉舊稱「海口厝」，這個地名直接描述了當地的地理位置：這一帶地處舊虎尾溪注入台灣海峽的出海口附近，先民依此地形特徵，將聚落稱為「海口厝」，這種以「海口」直接命名濱海聚落的方式，在台灣沿海地區相當普遍。台灣光復後，政府為了行政區劃命名的系統性考量，將原本的「海口厝」改稱為「台西」，取其位處台灣本島西側之意，與台北、台南、台東、台中等以方位命名的地名相互對稱、呼應。台西鄉地處濁水溪與北港溪之間的沿海地帶，因地層下陷與海水倒灌問題較為嚴重，加上漁業資源豐富，是雲林縣重要的漁業鄉鎮，台西海口生態園區與夕陽美景，也讓這個源自「海口」地形描述的濱海鄉鎮，發展出獨特的海線觀光魅力。"],
+    ["雲林縣","元長鄉","元掌","元長因清乾隆年間泉州人傅元掌率眾來此開墾建莊，鄉民感念其恩德，以其名「元掌」為莊名，後因諧音改稱元長。","","元長鄉地名由來直接紀念一位拓墾先驅：清乾隆6年（1741年），來自福建泉州府的傅元掌，率領族人渡海來到這片土地開墾，建立莊社，並熱心為地方公共事務服務，深受居民愛戴。傅元掌去世後，當地鄉民為感念他的開墾恩德與貢獻，便以其本名「元掌」作為莊名，這種直接以拓墾先賢姓名命名地方的案例，在雲林縣境內相當獨特，也反映了移民社會對開拓者的崇敬與紀念。至於「元掌」如何演變為今日的「元長」，說法有二：一說純粹是文字訛傳所致；另一說則指清嘉慶年間，當地居民曾協助平亂有功，獲清廷嘉許表揚，因「掌」與「長」發音相近，官方便將地名改為更具吉祥意涵的「元長」。元長鄉地處雲林縣西南沿海平原，是花生、蒜頭等雜糧作物的重要產地。"],
+    ["雲林縣","四湖鄉","四湖","四湖因早期聚落沿境內四個潟湖陸化後遺留的池沼建立而得名。","","四湖鄉地名由來源自當地特殊的海岸地貌演變：這一帶原是台灣西南沿海常見的潟湖地形，隨著漫長歲月的泥沙淤積作用，這些潟湖逐漸陸化萎縮，僅在低窪處遺留下四個較大的淡水池沼，先民依傍這四處池塘建立聚落，因而得名「四湖」，鄰近的口湖、崙後湖、施厝湖等同樣帶有「湖」字的地名，都是同一套潟湖陸化過程留下的地形見證。四湖鄉地處雲林縣西南沿海地帶，因地層下陷與海水倒灌問題，加上鄰近的箔子寮漁港，是雲林縣重要的漁業與養殖鄉鎮，境內台灣寢具產業與周邊的花生、蒜頭等雜糧作物，共同構成四湖鄉多元的農漁業經濟樣貌。"],
+    ["雲林縣","口湖鄉","烏麻園","口湖原稱烏麻園，因早期遍植烏麻而得名，後因四周魚池廣闊如湖，或因地處四湖等以湖為名的聚落群入口而改稱口湖。","","口湖鄉舊稱「烏麻園」，因早期這片土地上遍植一種稱為「烏麻」的作物而得名。關於後來改稱「口湖」的原因，主要有兩種說法：第一種說法指出，台灣光復後，這一帶因四周遍布廣闊如湖的魚塭養殖池，居民便依此景觀改稱「口湖」；第二種說法則從地理位置著眼，指這處聚落恰好位於四湖、後湖、內湖、施厝湖等一系列以「湖」為名的潟湖陸化聚落群的入口位置，因而得名「口湖」。口湖鄉地處雲林縣最西南端的沿海地帶，因地層下陷嚴重，加上1986年韋恩颱風重創當地養殖漁業，造成慘重傷亡，是台灣近代重大天然災害史上的傷痛記憶之一。如今口湖鄉以烏魚子、鰻魚等漁業養殖聞名，成龍濕地生態園區也是雲林縣重要的生態旅遊景點。"],
+    ["雲林縣","水林鄉","水燦林","水林原稱水燦林，因早期是潟湖陸化後多沼澤地，沼澤內水漆樹（水燦）茂生而得名。","","水林鄉舊稱「水燦林」，這個地名描述了當地特殊的植被與地形演變：這一帶原本是台灣西南沿海常見的大片潟湖，隨著長期泥沙淤積而逐漸陸化，形成低窪多沼澤的地貌，沼澤地帶因而茂密生長著一種稱為「水漆」（水燦）的植物，這種植物生長於海泥濕地中，葉片布滿粗毛，觸碰後會引起皮膚腫痛過敏反應，與台灣民間俗稱「咬人狗」的植物有相似特性，先民依此特徵，將這片沼澤林地稱為「水燦林」，1920年簡化為「水林」。水林鄉與北港鎮同屬古笨港文化圈範圍，境內的番薯厝聚落更是知名藝人的故鄉，加上蕃薯、花生等雜糧作物種植興盛，是雲林縣沿海平原重要的農業鄉鎮之一。"],
+    ["雲林縣","劍湖山","珠螺湖","劍湖山因山頂天然湖泊相傳鄭成功插劍求水湧泉成湖而得名，湖中原多無尾田螺，故舊稱珠螺湖。","","劍湖山地名源自古坑鄉永光村山頂上一座天然湖泊「劍湖」，關於這座湖的由來，流傳著兩種傳說：一說是玄天上帝出巡遊歷時，不慎將隨身寶劍遺落湖底；另一說則更廣為人知，相傳明鄭時期鄭成功行經此地時，將寶劍插立於大堀頂的台地上，劍拔出後泉水竟汩汩湧出、終年不絕，逐漸匯聚成湖，因而得名「劍湖」，這與台北劍潭、台中劍井等地流傳鄭成功插劍或拋劍的傳說，屬於同一類在台灣各地反覆出現的民族英雄地名附會現象。劍湖湖中原本棲息大量尾部退化的無尾田螺，因而又有「珠螺湖」的舊稱；也因湖水清澈見底，另稱「淨水湖」。1986年，企業家陳鏡村選在劍湖山附近的荒山野地開發遊樂園，1988年正式命名「劍湖山世界」對外營業，如今已是中南台灣規模最大的主題樂園之一，讓這座源自鄭成功傳說的山中湖泊，成為雲林縣最知名的觀光地標。"],
+    ["雲林縣","石榴","石榴班","石榴班是斗六門出入內山的咽喉要地，地名最早見於清代諸羅縣志「石榴班陂」的水利工程記載，確切語源已難詳考。","","石榴班（今作石榴）是斗六市北側的傳統地域名稱，地名最早見於清代文獻《諸羅縣志》：「石榴班陂，在柴裡社東北，源由阿拔泉溪出，康熙49年（1710年），庄民合築」，可見早在18世紀初，這一帶便已因興建水利埤塘設施而留下「石榴班」的地名記錄，是雲林縣少數自清初沿用至今、未曾更名的古老地名之一。石榴班因地處斗六門進出阿里山內山地帶的咽喉要道，正是今日台3線石榴路的所在位置，自古便是交通往來的必經之地，光緒20年（1894年）《雲林縣采訪冊》記載當地已有五百三十戶、一千七百餘丁口，發展成僅次於斗六街本身的重要聚落。至於「石榴」二字的確切語源，究竟是因當地曾遍植石榴樹，或另有他解，文獻中並未明確記載，仍待進一步考證。如今石榴車站是雲林縣境內少數保留完整的鐵道車站建築之一，是鐵道迷造訪雲林時的重要景點。"],
     
     // --- 【嘉義縣市】 ---
     ["嘉義市","東區","諸羅","諸羅山社核心。"],
@@ -1378,6 +1392,9 @@ function countyStats(county) {
     return { total, correct, pct, lit: pct >= 100 };
 }
 
+let mapViewBox = { x: 0, y: 0, w: 670, h: 720 };
+const MAP_VB_DEFAULT = { x: 0, y: 0, w: 670, h: 720 };
+
 function renderAchievements() {
     const svg = document.getElementById('tw-map');
     const summary = document.getElementById('ach-summary');
@@ -1393,7 +1410,7 @@ function renderAchievements() {
         if (s.lit) {
             fill = 'var(--gold)';
         } else if (s.pct <= 0) {
-            fill = '#e0e0e0';
+            fill = geo.inset ? '#eef2f5' : '#e0e0e0';
         } else {
             // 依答對率從淡藍漸層到深藍
             const t = Math.min(s.pct / 100, 1);
@@ -1403,19 +1420,40 @@ function renderAchievements() {
             fill = `rgb(${r},${g},${b})`;
         }
 
-        svgContent += `<polygon class="county-shape ${s.lit ? 'lit' : ''}" data-c="${c}" points="${geo.pts}" fill="${fill}"></polygon>`;
-        svgContent += `<text class="county-label" x="${geo.lx}" y="${geo.ly}" data-c="${c}">${c.replace('臺','台')}</text>`;
+        const shapeClass = `county-shape ${s.lit ? 'lit' : ''} ${geo.inset ? 'inset' : ''}`;
+        svgContent += `<polygon class="${shapeClass}" data-c="${c}" points="${geo.pts}" fill="${fill}"></polygon>`;
+        svgContent += `<text class="county-label ${geo.inset ? 'inset-label' : ''}" x="${geo.lx}" y="${geo.ly}" data-c="${c}">${c.replace('臺','台')}</text>`;
     });
 
     svg.innerHTML = svgContent;
     summary.innerHTML = `已點亮 <b style="color:#b8860b;font-size:1.3rem;">${litCount}</b> / ${allCounties.length} 個縣市（該縣市題目全部答對才會點亮）`;
 
     document.getElementById('ach-detail').style.display = 'none';
+    resetHoverInfo();
 
     svg.querySelectorAll('.county-shape, .county-label').forEach(el => {
         el.style.pointerEvents = 'auto';
         el.onclick = () => showCountyDetail(el.dataset.c);
     });
+
+    mapZoomReset();
+    initMapPanZoom(svg);
+}
+
+function resetHoverInfo() {
+    const info = document.getElementById('hover-info');
+    if (info) {
+        info.classList.remove('active');
+        info.innerText = '👆 將手指或滑鼠移到地圖上查看縣市進度';
+    }
+}
+
+function updateHoverInfo(c) {
+    const info = document.getElementById('hover-info');
+    if (!info) return;
+    const s = countyStats(c);
+    info.classList.add('active');
+    info.innerText = `${s.lit ? '🏆' : '📍'} ${c}　答對率 ${s.pct}%（${s.correct}/${s.total}）`;
 }
 
 function showCountyDetail(c) {
@@ -1440,6 +1478,114 @@ function goQuizForCounty(c) {
     updateScopeInfo();
     initQuiz();
     setTab('quiz', document.querySelectorAll('.nav-btn')[1]);
+}
+
+// ================= 地圖縮放與拖曳 =================
+function applyMapViewBox() {
+    const svg = document.getElementById('tw-map');
+    if (!svg) return;
+    svg.setAttribute('viewBox', `${mapViewBox.x} ${mapViewBox.y} ${mapViewBox.w} ${mapViewBox.h}`);
+}
+
+function mapZoom(factor, cx, cy) {
+    const vb = mapViewBox;
+    const svg = document.getElementById('tw-map');
+    if (!svg) return;
+    // 預設以畫面中心為縮放基準點
+    if (cx === undefined) { cx = vb.x + vb.w / 2; cy = vb.y + vb.h / 2; }
+    const newW = Math.min(MAP_VB_DEFAULT.w, Math.max(MAP_VB_DEFAULT.w * 0.18, vb.w * factor));
+    const newH = newW * (MAP_VB_DEFAULT.h / MAP_VB_DEFAULT.w);
+    // 保持縮放基準點在畫面中的相對位置不變
+    const ratioX = (cx - vb.x) / vb.w;
+    const ratioY = (cy - vb.y) / vb.h;
+    vb.x = cx - ratioX * newW;
+    vb.y = cy - ratioY * newH;
+    vb.w = newW;
+    vb.h = newH;
+    clampMapViewBox();
+    applyMapViewBox();
+}
+
+function clampMapViewBox() {
+    const vb = mapViewBox;
+    vb.w = Math.min(MAP_VB_DEFAULT.w, vb.w);
+    vb.h = Math.min(MAP_VB_DEFAULT.h, vb.h);
+    vb.x = Math.max(MAP_VB_DEFAULT.x - vb.w * 0.3, Math.min(vb.x, MAP_VB_DEFAULT.x + MAP_VB_DEFAULT.w - vb.w + vb.w * 0.3));
+    vb.y = Math.max(MAP_VB_DEFAULT.y - vb.h * 0.3, Math.min(vb.y, MAP_VB_DEFAULT.y + MAP_VB_DEFAULT.h - vb.h + vb.h * 0.3));
+}
+
+function mapZoomReset() {
+    mapViewBox = { ...MAP_VB_DEFAULT };
+    applyMapViewBox();
+}
+
+function initMapPanZoom(svg) {
+    if (svg.dataset.panzoomInit) return; // 只綁定一次事件
+    svg.dataset.panzoomInit = '1';
+
+    let dragging = false;
+    let lastX = 0, lastY = 0;
+    let hoverTarget = null;
+
+    function svgPoint(evt) {
+        const rect = svg.getBoundingClientRect();
+        const px = (evt.clientX - rect.left) / rect.width;
+        const py = (evt.clientY - rect.top) / rect.height;
+        return { x: mapViewBox.x + px * mapViewBox.w, y: mapViewBox.y + py * mapViewBox.h };
+    }
+
+    function findCounty(evt) {
+        const el = document.elementFromPoint(evt.clientX, evt.clientY);
+        if (!el) return null;
+        const shape = el.closest ? el.closest('.county-shape, .county-label') : null;
+        return shape ? shape.dataset.c : null;
+    }
+
+    svg.addEventListener('pointerdown', (e) => {
+        dragging = true;
+        lastX = e.clientX; lastY = e.clientY;
+        svg.classList.add('dragging');
+        svg.setPointerCapture(e.pointerId);
+    });
+
+    svg.addEventListener('pointermove', (e) => {
+        if (dragging) {
+            const rect = svg.getBoundingClientRect();
+            const dx = (e.clientX - lastX) / rect.width * mapViewBox.w;
+            const dy = (e.clientY - lastY) / rect.height * mapViewBox.h;
+            mapViewBox.x -= dx;
+            mapViewBox.y -= dy;
+            clampMapViewBox();
+            applyMapViewBox();
+            lastX = e.clientX; lastY = e.clientY;
+        }
+        const c = findCounty(e);
+        if (c && c !== hoverTarget) {
+            hoverTarget = c;
+            updateHoverInfo(c);
+        } else if (!c && hoverTarget) {
+            hoverTarget = null;
+            resetHoverInfo();
+        }
+    });
+
+    svg.addEventListener('pointerup', (e) => {
+        dragging = false;
+        svg.classList.remove('dragging');
+        try { svg.releasePointerCapture(e.pointerId); } catch(err) {}
+    });
+    svg.addEventListener('pointerleave', () => {
+        dragging = false;
+        svg.classList.remove('dragging');
+        hoverTarget = null;
+        resetHoverInfo();
+    });
+
+    svg.addEventListener('wheel', (e) => {
+        e.preventDefault();
+        const pt = svgPoint(e);
+        mapZoom(e.deltaY > 0 ? 1.15 : 0.87, pt.x, pt.y);
+    }, { passive: false });
 }
 
 // ================= 分頁切換 =================
