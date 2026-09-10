@@ -5,24 +5,37 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>台灣地名尋根 (深入版)</title>
 <style>
-:root { --primary: #37474f; --secondary: #c62828; --bg: #eceff1; --card-bg: #fff; --accent: #ff9800; --gold: #d4af37; }
+:root { --primary: #37474f; --primary-light: #546e7a; --secondary: #c62828; --bg: #eef1f4; --card-bg: #fff; --accent: #ff9800; --gold: #d4af37; --radius: 16px; }
 * { box-sizing: border-box; }
-body { font-family: "Noto Sans TC", sans-serif; background: var(--bg); margin: 0; padding-bottom: 60px; color: #333; user-select: none; }
+body { font-family: "Noto Sans TC", sans-serif; background: linear-gradient(180deg, #eef1f4 0%, #e4e9ed 400px, #eef1f4 800px); margin: 0; padding-bottom: 60px; color: #333; user-select: none; }
 
-header { background: #263238; color: #fff; padding: 30px 20px; text-align: center; box-shadow: 0 4px 10px rgba(0,0,0,0.2); position: relative; }
-h1 { margin: 0; font-size: 1.8rem; }
-header p { color: #b0bec5; font-size: 0.9rem; margin-top: 5px; }
+.splash-screen { position: fixed; inset: 0; z-index: 2000; background: linear-gradient(160deg, #1a2327, #37474f 55%, #546e7a); display: flex; align-items: center; justify-content: center; transition: opacity 0.5s ease, visibility 0.5s ease; }
+.splash-screen.hidden { opacity: 0; visibility: hidden; pointer-events: none; }
+.splash-inner { text-align: center; color: #fff; padding: 30px; max-width: 420px; animation: splashFloat 3s ease-in-out infinite; }
+@keyframes splashFloat { 0%,100% { transform: translateY(0); } 50% { transform: translateY(-8px); } }
+.splash-icon { font-size: 4.5rem; margin-bottom: 10px; filter: drop-shadow(0 4px 10px rgba(0,0,0,0.3)); }
+.splash-title { font-size: 2rem; margin: 0 0 8px; letter-spacing: 2px; }
+.splash-sub { color: #cfd8dc; font-size: 0.9rem; margin-bottom: 32px; line-height: 1.6; }
+.splash-btn { padding: 16px 42px; font-size: 1.15rem; font-weight: bold; background: linear-gradient(135deg, var(--accent), #ffb74d); color: #3e2200; border: none; border-radius: 32px; cursor: pointer; box-shadow: 0 6px 18px rgba(255,152,0,0.45); transition: transform 0.2s; }
+.splash-btn:hover { transform: scale(1.06); }
+.splash-btn:active { transform: scale(0.97); }
+.splash-hint { margin-top: 18px; font-size: 0.75rem; color: #90a4ae; }
+
+header { background: linear-gradient(135deg, #1c262b, #2f3e46 55%, #435761); color: #fff; padding: 34px 20px 30px; text-align: center; box-shadow: 0 4px 14px rgba(0,0,0,0.25); position: relative; }
+h1 { margin: 0; font-size: 1.85rem; letter-spacing: 1px; text-shadow: 0 2px 6px rgba(0,0,0,0.3); }
+header p { color: #b0bec5; font-size: 0.9rem; margin-top: 6px; }
 
 .settings-fab { position: fixed; bottom: 20px; left: 20px; z-index: 200; width: 52px; height: 52px; border-radius: 50%; background: #263238; color: #fff; border: 2px solid rgba(255,255,255,0.35); font-size: 1.4rem; cursor: pointer; box-shadow: 0 3px 10px rgba(0,0,0,0.3); display: flex; align-items: center; justify-content: center; transition: transform 0.2s; }
 .settings-fab:hover { transform: scale(1.08); background: #37474f; }
 .settings-fab:active { transform: scale(0.95); }
 .icon-btn:hover { background: rgba(255,255,255,0.35); }
 
-.nav { display: flex; justify-content: flex-start; gap: 8px; padding: 12px; background: #fff; position: sticky; top: 0; z-index: 90; box-shadow: 0 2px 5px rgba(0,0,0,0.1); flex-wrap: nowrap; overflow-x: auto; -webkit-overflow-scrolling: touch; scrollbar-width: thin; }
+.nav { display: flex; justify-content: flex-start; gap: 8px; padding: 12px; background: rgba(255,255,255,0.92); backdrop-filter: blur(6px); position: sticky; top: 0; z-index: 90; box-shadow: 0 2px 8px rgba(0,0,0,0.08); flex-wrap: nowrap; overflow-x: auto; -webkit-overflow-scrolling: touch; scrollbar-width: thin; }
 @media (min-width: 640px) { .nav { justify-content: center; } }
 .nav-btn { flex-shrink: 0; }
-.nav-btn { padding: 8px 16px; border: 1px solid var(--primary); border-radius: 20px; background: transparent; color: var(--primary); font-weight: bold; cursor: pointer; transition: 0.3s; font-size: 0.9rem; }
-.nav-btn.active { background: var(--primary); color: #fff; }
+.nav-btn { padding: 9px 18px; border: 1.5px solid var(--primary); border-radius: 22px; background: transparent; color: var(--primary); font-weight: bold; cursor: pointer; transition: 0.25s; font-size: 0.9rem; }
+.nav-btn:hover { background: rgba(55,71,79,0.08); }
+.nav-btn.active { background: linear-gradient(135deg, var(--primary), var(--primary-light)); color: #fff; border-color: transparent; box-shadow: 0 3px 10px rgba(55,71,79,0.35); }
 
 .container { max-width: 1200px; margin: auto; padding: 20px; }
 .section { display: none; animation: fadeIn 0.5s; }
@@ -50,10 +63,11 @@ header p { color: #b0bec5; font-size: 0.9rem; margin-top: 5px; }
 .page-btn:disabled { opacity: 0.4; cursor: not-allowed; }
 .page-ellipsis { padding: 0 4px; color: #999; }
 .page-info { font-size: 0.82rem; color: #777; margin: 0 8px; }
-select, input { padding: 10px; border: 1px solid #ccc; border-radius: 6px; font-size: 1rem; }
+select, input { padding: 10px; border: 1px solid #d0d7dc; border-radius: 8px; font-size: 1rem; background: #fff; }
+select:focus, input:focus { outline: none; border-color: var(--primary-light); box-shadow: 0 0 0 3px rgba(84,110,122,0.15); }
 .grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(220px, 1fr)); gap: 15px; }
-.grid-item { background: #fff; padding: 15px; border-radius: 10px; box-shadow: 0 2px 5px rgba(0,0,0,0.05); cursor: pointer; transition: 0.2s; border-left: 5px solid transparent; position: relative; }
-.grid-item:hover { transform: translateY(-3px); box-shadow: 0 5px 15px rgba(0,0,0,0.1); }
+.grid-item { background: #fff; padding: 16px; border-radius: 14px; box-shadow: 0 2px 8px rgba(0,0,0,0.06); cursor: pointer; transition: transform 0.2s, box-shadow 0.2s; border-left: 5px solid transparent; position: relative; }
+.grid-item:hover { transform: translateY(-4px); box-shadow: 0 8px 20px rgba(0,0,0,0.12); }
 .grid-item.st-correct { border-left-color: #4caf50; }
 .grid-item.st-wrong { border-left-color: #ef5350; }
 .grid-item.st-unseen { border-left-color: #bdbdbd; }
@@ -70,8 +84,8 @@ select, input { padding: 10px; border: 1px solid #ccc; border-radius: 6px; font-
 .quiz-img-box { width: 100%; height: 250px; margin-bottom: 20px; border-radius: 12px; overflow: hidden; background: #eee; }
 .quiz-img-box img { width: 100%; height: 100%; object-fit: cover; display:block; }
 .quiz-options { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-top: 20px; }
-.q-btn { padding: 15px; border: 1px solid #ddd; background: #fff; border-radius: 8px; cursor: pointer; font-size: 1rem; font-weight: bold; transition: 0.2s; }
-.q-btn:hover:not(:disabled) { background: #f5f5f5; }
+.q-btn { padding: 15px; border: 1.5px solid #e0e4e7; background: #fff; border-radius: 10px; cursor: pointer; font-size: 1rem; font-weight: bold; transition: 0.2s; box-shadow: 0 1px 3px rgba(0,0,0,0.04); }
+.q-btn:hover:not(:disabled) { background: #f5f7f8; border-color: var(--primary-light); transform: translateY(-2px); }
 .q-btn.correct { background: #e8f5e9; border-color: #4caf50; color: #2e7d32; animation: pop 0.3s; }
 .q-btn.wrong { background: #ffebee; border-color: #ef5350; color: #c62828; animation: shake 0.4s; }
 .empty-pool { max-width:600px; margin:40px auto; text-align:center; color:#888; background:#fff; padding:30px; border-radius:16px; }
@@ -107,7 +121,8 @@ select, input { padding: 10px; border: 1px solid #ccc; border-radius: 6px; font-
 .ach-bar-bg { width: 100%; height: 10px; background: #eee; border-radius: 6px; margin-top: 10px; overflow: hidden; }
 .ach-bar-fill { height: 100%; background: linear-gradient(90deg, #90caf9, #42a5f5); transition: width 0.4s; }
 .ach-bar-fill.full { background: linear-gradient(90deg, var(--gold), #f5d76e); }
-.ach-detail .go-quiz-btn { margin-top: 12px; padding: 10px 24px; background: var(--primary); color: #fff; border: none; border-radius: 20px; cursor: pointer; font-weight: bold; }
+.ach-detail .go-quiz-btn { margin-top: 12px; padding: 11px 26px; background: linear-gradient(135deg, var(--primary), var(--primary-light)); color: #fff; border: none; border-radius: 22px; cursor: pointer; font-weight: bold; box-shadow: 0 4px 12px rgba(55,71,79,0.35); transition: transform 0.2s; }
+.ach-detail .go-quiz-btn:hover { transform: translateY(-2px); }
 .ach-summary { max-width:480px; margin:0 auto 16px; text-align:center; background:#fff; padding:16px; border-radius:14px; box-shadow:0 2px 8px rgba(0,0,0,0.06); }
 
 /* Modal */
@@ -142,10 +157,21 @@ input:checked + .slider:before { transform: translateX(22px); }
 .scope-item span.cnt { margin-left:auto; font-size:0.8rem; color:#888; }
 .scope-actions { display:flex; gap:10px; margin-bottom:10px; }
 .scope-actions button { flex:1; padding:8px; border-radius:8px; border:1px solid var(--primary); background:#fff; color:var(--primary); cursor:pointer; font-weight:bold; }
-.primary-btn { width:100%; padding:12px; background:var(--primary); color:#fff; border:none; border-radius:8px; cursor:pointer; margin-top:10px; font-weight:bold; }
+.primary-btn { width:100%; padding:12px; background:linear-gradient(135deg, var(--primary), var(--primary-light)); color:#fff; border:none; border-radius:10px; cursor:pointer; margin-top:10px; font-weight:bold; box-shadow: 0 3px 10px rgba(55,71,79,0.3); transition: transform 0.2s; }
+.primary-btn:hover { transform: translateY(-1px); }
 </style>
 </head>
 <body>
+
+<div id="splash-screen" class="splash-screen">
+    <div class="splash-inner">
+        <div class="splash-icon">🗺️</div>
+        <h1 class="splash-title">台灣地名尋根</h1>
+        <p class="splash-sub">深入版 · 完整收錄全台行政區、古地名與細部小地名由來</p>
+        <button class="splash-btn" onclick="startApp()">🚀 開始探索</button>
+        <p class="splash-hint">點擊開始即可啟用背景音樂與音效</p>
+    </div>
+</div>
 
 <header>
     <h1>🗺️ 台灣地名尋根 (深入版)</h1>
@@ -878,6 +904,21 @@ const rawPlacesData = [
     ["嘉義縣","水汴頭","水圳分水閘","民雄鄉一帶舊地名，因當地灌溉水圳設有分水閘門（水汴）調節水量而得名。","s","水汴頭與民雄鄉主地名「打貓」分屬不同層次的地名系統：打貓源自洪雅族社名，是整個民雄地區的古老稱呼，水汴頭則是民雄境內一處更細緻的小地名，專指灌溉水圳設置分水閘門的特定地點。「汴」在水利用語中意指調節水流分配的閘門或涵管，先民在打貓地區興修水圳灌溉農田時，於水量分配的關鍵節點設置水汴，用以公平分配各處農田所需的灌溉用水，這處設施周邊逐漸形成聚落後，便直接以「水汴頭」為地名，反映了清代嘉南平原農業拓墾對水利工程與灌溉管理的高度依賴。如今水汴頭一帶已融入民雄鄉的市街發展範圍，但這個地名仍見證著先民在打貓這片土地上，如何透過精密的水利分配制度，將洪雅族的荒野墾殖為嘉南平原上的良田阡陌。"],
     ["金門縣","浯洲","牡蠣沙洲","金門舊稱，因島上盛產牡蠣（蚵）且多沙洲地形，古稱浯洲，明代因軍事地位重要改稱金門。","s","「浯洲」是金門在明代以前最主要的舊稱，另有仙洲、浯江、浯島等別稱，自晉代以來，金門便有中原移民因躲避戰亂而渡海南遷至此的紀錄，唐德宗時更在此設置牧馬區，隨牧馬監陳淵前來的蔡、許、翁、李、張、黃、王、呂、劉、洪、林、蕭等十二姓氏，至今仍是島上主要姓氏，並以血緣關係形成傳統聚落。金門自古隸屬福建同安縣管轄，明洪武年間，江夏侯周德興奉命在浯洲興建「守禦千戶所城」，考量此地內可捍衛漳州、廈門，外可牽制台灣、澎湖，具有「固若金湯、雄鎮海門」的險要形勢，遂將「浯洲」正式改稱「金門」，這個充滿軍事戰略意涵的新地名沿用至今，明清科舉時期更曾締造「八鯉渡江」「五桂聯芳」等多人同科及第的科舉佳話，顯示浯洲雖僻處海隅，文風卻頗為鼎盛。"],
     ["連江縣","馬祖","媽祖顯靈傳說","相傳媽祖曾在南竿島顯靈拯救船難漁民，鄉民感念建廟奉祀，島嶼因而得名馬祖（媽祖音轉）。","s","「馬祖」地名由來，與媽祖信仰的一則靈驗傳說密切相關：相傳媽祖之父林願因公殉海，媽祖沿海尋找父親遺體，最終尋獲後安葬於南竿島馬港村一帶的山巔，鄉民感念媽祖至孝之情與其後屢次在海上顯靈庇佑漁民船隻、拯救船難的事蹟，建廟奉祀，這座廟宇便是今日的馬祖天后宮；「馬祖」一詞即是「媽祖」的音轉寫法，此後這片列島便以「馬祖」為名，沿用至今，與金門「浯洲」因軍事戰略考量命名的邏輯截然不同，馬祖是少數直接源自民間信仰傳說的離島地名。馬祖列島由南竿、北竿、莒光、東引等數十座島嶼組成，是台澎金馬地區最北端的領土，因地理位置特殊，在兩岸對峙年代曾是保衛台澎的軍事前哨，戰地坑道與地下工事遍布全境；如今每年6至8月盛產的藍眼淚生態奇景與元宵擺暝迎神民俗，讓馬祖從昔日的戰地前線，轉型為兼具自然生態與獨特閩東文化的觀光勝地。"],
+    ["嘉義市","紅毛井","蘭井","紅毛井為荷蘭人1657年在諸羅山社聚落中心開鑿的水井，因水質甘美列入諸羅八景「蘭井泉甘」，是嘉義市現存最古老的古蹟。","s","紅毛井又稱蘭井，是荷蘭聯合東印度公司於1657年在諸羅山社聚落中心「中央廣場」開鑿的水井，當時荷蘭政務員與牧師已進駐此地治理傳教多年，因派駐人員日增，遂鑿此大井供應飲水需求。台灣民間慣以「紅毛」稱呼荷蘭人，故稱「紅毛井」。明鄭時期，鎮守諸羅山的部將吳智武曾加以整修；清乾隆27年（1762年），諸羅知縣衛克堉因井水甘美冠於全縣，以「蘭井泉甘」之名列入「諸羅八景」，附近街道也因此得名「蘭井街」。日治時期水質逐漸惡化，官署甚至張貼「不適飲用」告示，1928年一度遭磚石填塞荒廢，直到民國59年（1970年）嘉義市長許世賢重修此井並立碑紀念。紅毛井是嘉義市內留存最久的古蹟，2008年公告為歷史建築，見證了諸羅山從荷治聚落發展至今的三百餘年歷史。"],
+    ["嘉義市","蘭潭","紅毛埤","蘭潭古稱紅毛埤，相傳為荷蘭人所鑿的埤塘，1942年整治為水庫，「蘭潭泛月」是諸羅八景之一，是嘉義市重要的水源地與觀光勝地。","s","蘭潭位於嘉義市東郊山仔頂，古稱「紅毛埤」，相傳荷蘭統治時期，為確保灌溉水源穩定，在八掌溪上游築堰壩截流成埤，灌溉附近的「王田」，因漢人稱荷蘭人為「紅毛」而得名；此後清康熙34年（1695年），當地漢人與諸羅山社合作另築「番仔陂」（今北香湖公園），與紅毛埤分屬不同水利系統。日治昭和年間，因嘉義市民生用水激增，加上台灣拓殖株式會社設立的嘉義化學工場需要大量工業用水，遂於1942年在紅毛埤原址興建水庫，1944年完工，因潭水清澈、名稱典雅而改稱「蘭潭」，「蘭潭泛月」的皎潔夜色更被列入諸羅八景之一。如今蘭潭仍是嘉義地區自來水的主要供應源，環潭步道、蘭潭後山公園與藝術裝置「月影潭心」，讓蘭潭成為嘉義市民假日休閒的重要去處，也是嘉義大學鄰近的地標水域。"],
+    ["澎湖縣","吉貝嶼","嘉貝嶼","吉貝嶼因島嶼形狀宛如一枚螺貝漂浮海面，先民稱嘉貝嶼，後以諧音雅化為吉貝，是澎湖北海最大島嶼、石滬密度最高之地。","s","吉貝嶼舊稱「嘉貝嶼」，因整座島嶼的地形輪廓，從高處俯瞰宛如一枚螺貝漂浮於海面之上，先民依此形似特徵為地方命名，其後以台語諧音雅化，將「嘉貝」改為更具吉祥意涵的「吉貝」，沿用至今。吉貝嶼是澎湖群島北海海域中最大的有人島，島嶼地勢東高西低，西南方由西崁山向外延伸出一道長達七百餘公尺的沙嘴地形，沖積而成的金黃色沙灘是遊客造訪的重點，周邊廣大的潮間帶更聚集了約八十餘座傳統石滬，是全澎湖石滬分布最密集的地方，堪稱先民智慧捕魚工法的活教材。清雍正5年（1727年），吉貝從鎮海澳分設獨立為「吉貝澳」，如今則是澎湖縣白沙鄉轄下的離島社區，因水上活動盛行，是澎湖夏季觀光最熱門的離島之一。"],
+    ["澎湖縣","二崁","二崁社","二崁因聚落座落於東西兩處台地之間而得名「崁」（意指高地），是明末金門陳姓移民所建立的單姓聚落，為台灣第一個傳統聚落保存區。","s","二崁地名中的「崁」字，在台語中意指山丘或高地，二崁聚落因坐落於東、西兩處台地之間而得名。相傳明末清初，金門下坑（今金湖鎮夏興）陳姓先祖陳延益渡海遷居澎湖大池角，因當地可耕地已被先期移民占據，才輾轉遷居到龜山腳下的海濱，傳至第三代後，子孫日益增加分為四房，才陸續遷移至二崁定居，逐漸發展成清代道光年間成形的單姓血緣聚落，甲午戰爭後因生計艱難，青壯人口大量外流至台灣本島謀生。聚落內保存完整的閩南式古厝，以硓𥑮石與玄武岩為建材，最具代表性的陳家古厝，是兩位陳姓兄弟經商致富返鄉興建的三落大厝。民國90年（2001年），二崁經內政部指定為全台第一個「傳統聚落保存區」，如今活化為常民生活館、褒歌館等社區博物館群，是澎湖保存最完整的傳統聚落之一。"],
+    ["澎湖縣","通樑古榕","通梁","通樑古榕相傳三百多年前一艘商船在吼門水道遇難，僅存一株榕樹苗漂流上岸，村民拾獲種植於保安宮前，如今已長成枝葉茂密的巨型老榕。","s","通樑古榕的由來，源自一則海難漂流的傳說：相傳約三百多年前，一艘商船航經澎湖白沙鄉通樑村外海的「吼門水道」（因水流湍急、聲如虎吼而得名）時不幸觸礁沉沒，船貨盡失，唯獨一株小小的榕樹苗漂流上岸，被當地村民拾獲後，栽種於保安宮廟埕之前。這株榕樹歷經三百餘年的歲月滋養，主幹早已分化出上百條氣根盤根錯節，枝葉開展覆蓋面積廣達六百多平方公尺，形成一片枝繁葉茂的天然綠蔭，是澎湖跨海大橋通車後遊客北環必訪的知名地標。通樑古榕不僅是澎湖現存樹齡最老、樹冠最大的老榕樹，村民更在樹蔭下設置石桌石椅供人乘涼歇息，讓這株因海難奇蹟漂流而來的樹苗，成為通樑村最具代表性的守護象徵與觀光名片。"],
+    ["澎湖縣","虎井嶼","船篷嶼","虎井嶼舊稱船篷嶼、檯嶼，因島嶼地形中央裂開一道港灣、遠望形似猛虎而得名，是北回歸線穿越的澎湖第七大島。","s","虎井嶼舊稱「船篷嶼」或「檯嶼」，清代《台灣府志》記載此島「形如猛虎，中裂一港，故名」，另一版本府志則描述其地形「形如虎臨深」，兩種記載雖用詞略有出入，但都指出「虎井」之名源自島嶼地形神似猛虎的視覺意象，島嶼中央又因地勢裂陷形成一道天然港灣，恰似虎口一般，因而得名「虎井」，「井」字或許正呼應了這處中裂如井的港灣地形。虎井嶼是澎湖群島面積排名第七大的島嶼，特殊的是，北回歸線恰好穿越這座小島，具有地理座標上的獨特意義。島上的觀音公園立有一尊高達四公尺的漢白玉觀音巨像，由旅港鄉親捐贈故鄉，因運送過程一度斷裂為三截，如今仍可見接合痕跡。虎井嶼因地形隱密、漁業資源豐富，是澎湖群島中保留較多傳統漁村風貌的離島之一。"],
+    ["金門縣","珠山聚落","山仔兜","珠山聚落舊稱山仔兜，閩南語意指丘陵環抱的聚落，元代薛氏族人避難遷居於此，因聚落四周高地環繞、中有大潭而形成風水吉穴。","s","珠山聚落舊稱「山仔兜」，閩南語中「兜」意指家或聚居之處，「山仔兜」即指坐落於丘陵環抱之中的聚落。元至正5年（1345年），同安人薛貞率領家族渡海避難至此，最初落腳於「薛厝坑」，後代子孫以聚落東側一座小山「珠山」為名，逐漸取代原本的地名。珠山聚落地形四周皆為高地環繞，中央則有一座大潭，形成風水學上「四水歸塘」的吉穴格局，象徵財富匯聚，整個聚落便以薛氏大宗宗祠為核心，環繞著這座大潭向兩側拓展開來，民間更有「有水頭厝，無山仔兜富」的俗諺，形容珠山聚落當年的富庶程度不亞於水頭聚落。珠山至今已有六百五十餘年歷史，1949年國軍進駐後一度徵用民宅作為營舍，1958年八二三砲戰更遭嚴重破壞，經過長期修復，如今是金門保存最完整的單姓宗族傳統聚落之一，也是金門國家公園劃定的重要傳統建築保存區。"],
+    ["金門縣","瓊林","平林","瓊林因聚落樹木蓊鬱如傘蓋，原稱平林，明天啟皇帝以「平林」之名太過俗氣，特賜名瓊林，成為蔡氏宗族世代榮耀的里名。","s","瓊林原稱「平林」，因這座位於金門島中央蜂腰部平原地帶的聚落，遠望林木蓊鬱、樹冠儼然如蓋，因而得名。明天啟年間，皇帝垂詢金門籍官員蔡獻臣的出生地地名，聽聞「平林」之名後，認為過於俚俗，未能彰顯這座蔡氏宗族聚落人才輩出的文風氣象，遂御筆賜名「瓊林」，這個充滿皇室恩寵色彩的里名，自此成為蔡氏族人世代傳頌的無上榮耀。瓊林是金門規模最大的單姓（蔡氏）聚落，明清兩代累計出了六位進士、六位武將、七位舉人，「父子進士」蔡貴易、蔡獻臣父子，以及「五桂聯芳」的科舉佳話都出自此地，堪稱「文武世家」；村內宗祠數量之多、建築之精美，冠於金門全縣，有「七座八祠」之稱，瓊林祭祖傳統至今仍完整保存，被譽為一頁「活的閩南文化」，是金門文風鼎盛歷史的最佳見證。"],
+    ["金門縣","山后聚落","山后中堡","山后聚落因旅日僑領王國珍、王敬祥父子出資興建十八棟閩南二進式大厝，分贈族人居住，俗稱「山后十八間大厝」而聞名。","s","山后聚落位於金門金沙鎮山后村中堡，是清光緒26年（1900年）由旅居日本經商致富的僑領王國珍、王敬祥父子，斥資興建的宗族聚落。這對父子從大陸購入建材，耗費二十餘年光陰，陸續興建包含住宅、家祠與學堂（海珠堂）在內共十八棟房舍，全部依山面海而築、格局壯闊整齊，統一採用閩南傳統二進式建築樣式，落成後分贈給王氏族人居住，因而被金門人習稱「山后十八間大厝」，是金門僑鄉「落番」（下南洋經商）致富回饋鄉里的代表性建築群。民國68年（1979年），金門縣政府整修規劃後正式定名為「山后民俗文化村」，開闢成民俗文物、禮儀、喜慶、生產、武道、休閒等主題展館，加上一座古代官邸，集中展示金門地方民俗文物，成為認識金門傳統聚落建築藝術與僑鄉歷史的重要觀光據點。"],
+    ["金門縣","水頭聚落","金水","水頭聚落因地處金門島西南海濱、村落附近有一處終年不涸的泉源而得名，因僑匯興盛而洋樓林立，得月樓是最具代表性的僑鄉地標。","s","水頭聚落地名由來，一般認為與當地地理環境中曾有一處泉水源頭有關，「水頭」意指水源匯聚湧出之處，這座位於金門島西南海濱的聚落，因鄰近優良港灣，自古便是商賈往來與對外貿易的重要據點。清末民初，金門因土地貧脊，大量青壯人口渡海前往南洋（下南洋俗稱「落番」）經商謀生，水頭因地利之便，成為僑民匯款回鄉興建洋樓最集中的聚落之一，僑匯所建的西式洋樓與傳統閩南古厝交錯並存，形成獨特的僑鄉建築景觀，其中最富盛名的「得月樓」，是水頭富商黃輝煌僑匯興建、樓高突出的銃樓式建築，兼具防禦盜匪與彰顯家族財富的雙重功能，樓名取自「近水樓台先得月」的詩意，如今已成為金門僑鄉文化最具代表性的地標，水頭聚落也因此享有「有水頭厝，無山仔兜富」俗諺中所形容的富庶美名。"],
+    ["連江縣","牛角聚落","復興村","牛角聚落位於南竿島東北方，因島形似犀牛、聚落恰好座落於形似犀牛角的岬角處而得名，現正式行政名稱為復興村。","s","牛角聚落舊名「牛角」，現為連江縣南竿鄉復興村：相傳南竿島整體地形輪廓神似一頭犀牛，而這處聚落恰好座落於島嶼東北方、形貌如犀牛角般向海突出的岬角地帶，兩側山頭伸入海中的形貌，漁民從海上望去猶如一對牛角，因而得名。牛角聚落依循馬祖傳統「一澳一村」的聚落型態，沿著大澳灣澳而建，以花崗岩砌成的方正石屋層層錯落，蔚為特色。牛角在戰地政務時期一度發展成馬祖行政中樞與南竿商業中心，是當年第一大村，繁華程度獨領風騷，村內至今仍保留昔日「軍中樂園」特約茶室的歷史遺跡。如今牛角聚落雖已沒落沉寂，卻因保留較少觀光化痕跡、原汁原味的漁村風貌，加上每年秋季在此舉辦、感念臨水夫人庇佑孩童平安成長的地方青年成年禮，讓牛角持續散發獨特的馬祖在地文化魅力。"],
+    ["連江縣","鐵板聚落","仁愛村","鐵板聚落因海邊一塊沉積岩板在大退潮時露出水面、經陽光照射閃閃發光宛如鐵板而得名，現正式行政名稱為仁愛村。","s","鐵板聚落舊名「鐵板」，現為連江縣南竿鄉仁愛村：這處三面環山、一面向海的漁村聚落，因海岸邊有一塊天然沉積岩板，每逢大退潮時便會完全露出水面，在陽光照射下閃閃發亮，遠望宛如一塊鋪展於海邊的鐵板，因而得名。鐵板村擁有可追溯至元代的重要歷史見證：村內大王宮保存一方石碑，碑文記載「林酉才喜捨中統鈔二十貫」，中統鈔是元世祖時期流通的貨幣，證明南竿島早在元代便已有漢人聚落形成，是馬祖地區有文字記載最早的人類活動證據之一。鐵板村曾因設有大型菜市場與連江縣政府機關而繁華一時，享有「南竿不夜城」的美稱，惜隨著縣府與市場遷移逐漸沉寂，如今僅存少數閩東式漁家老屋與百年歷史的鐵板天后宮，靜靜訴說著這段漁村曾經的輝煌歲月。"],
+    ["連江縣","津沙聚落","金沙","津沙聚落因擁有一片如金砂般細緻的沙灘，原稱「金沙」，後改寫作「津沙」，是南竿最靠近中國大陸的第一大漁村聚落。","s","津沙聚落位於南竿島西南方雲台山下的一處灣澳，因當地擁有一片沙質格外細緻、在陽光照射下宛如黃金粉末般閃耀的沙灘，先民最初將此地命名為「金沙」，其後才改寫作發音相近的「津沙」，沿用至今。津沙是馬祖列島中地理位置最靠近中國大陸的第一大漁村聚落，清末以來，陸續有連江、長樂、琅岐島等地的福建沿海居民移入定居，是馬祖地區原籍大陸連江縣移民比例最高的村莊。早年津沙漁業興盛，居民除了出海捕撈，也兼營釀酒、藥鋪、商號等行業，一度是南竿第二大村，並因村內設有私塾而文風興盛。抗戰時期，日軍為控制閩江口航道，曾派兵駐守津沙西邊山的「雁廬」。如今津沙聚落經社區營造活化，頹圮的老屋重現生機，轉型為老酒館與特色民宿，是馬祖列島中最受遊客青睞的傳統聚落之一。"],
+    ["基隆市","八斗子","Pataw","八斗子源自平埔族巴賽語「Pataw」，意指女巫或溫泉，與台北北投同源；清末設有台灣第一座官營煤礦，如今為海科館與潮境公園所在地。","s","八斗子地名源自平埔族巴賽族語「Pataw」的音譯，這個詞彙意指「女巫」，與台北北投地名的由來語源相同，反映基隆與台北兩地平埔族群語言文化的關聯性；也有學者從「八斗仔」的「仔」尾綴推測，應是相對於古文獻中「八斗」這個主要大地名（可能指今和平島右岸岬角）而來的次要地名。八斗子東北側原有一座獨立於外海的「七斗山」島嶼，日治時期因興建北部火力發電所而填海造陸，與台灣本島相連成半島；光緒2年（1876年），清廷在此開設官營煤礦「清國井」，是台灣第一座官方經營的煤礦場，也讓八斗子早早便與台灣近代化礦業發展結下淵源。如今八斗子因國立海洋科技博物館、潮境公園與望幽谷（忘憂谷）等景點聞名，加上八斗子漁港豐富的海鮮，是基隆市東側最具代表性的觀光漁村。"],
+    ["基隆市","和平島","社寮島","和平島舊稱社寮島，因漢人依島上平埔族聚落稱之為「社」而得名，1626年西班牙人在此建聖薩爾瓦多城，是台灣面向世界的第一站。","s","和平島舊稱「社寮島」，16世紀漢人航海文獻中最早稱此島為「大雞籠嶼」，此地原是平埔族巴賽族雞籠社的傳統聚落，清代漢人因島上住有原住民「社」（部落）而稱之「社寮」，日治時期行政區劃更直接定名為「社寮町」，「社寮島」之名因而沿用長久。1626年，西班牙人占領北台灣後，選定此島興建「聖薩爾瓦多城」作為統治據點，與同時期荷蘭人在台南興建的熱蘭遮城遙相對峙，故有「南大員、北社寮」之說，是台灣最早直接面向世界局勢、與西方勢力接觸的第一站；近年考古挖掘更在城堡遺址附近，發現當年西班牙人興建教堂的遺跡與歐洲人骸骨。1947年，「社寮島」正式改稱「和平島」，關於改名原因眾說紛紜，或因祈求島嶼自古以來戰亂頻仍能歸於和平，或與戰後基隆市街依「忠孝仁愛信義和平」命名的脈絡有關；如今和平島公園的海蝕地形與歷史遺跡，讓這座島嶼持續訴說台灣最早與世界接軌的故事。"],
     // --- 【擴充：北橫．深山部落 深度考據】 ---
     ["桃園市","巴陵","Balung 巨木","巴陵（泰雅語 Balung，意為巨木）位於北橫公路中點，依海拔高低分為上、中、下巴陵，是知名的水蜜桃產地。","s","巴陵地名源自泰雅族語「Balung」，意指高大巨木。相傳早年泰雅族人沿著大漢溪上游遷徙尋找適合定居的河階地，來到今日中巴陵一帶時，見到倒臥於地的巨大枯木，便以此為地名，記錄下這片山林曾有巨木參天的印象。日治時期文獻中則出現巴崚、巴稜、巴壟、馬崙等不同譯寫，皆是同一泰雅語詞的音譯變體。巴陵位於北部橫貫公路的中點，因地勢由高而低分為上巴陵、中巴陵與下巴陵三段，各自呈現不同風貌：上巴陵鄰近拉拉山，保留大片紅檜與扁柏巨木群，其中1973年由學者發現的神木群，讓巴陵聲名大噪；中巴陵一帶可通往嘎拉賀與爺亨溫泉；下巴陵則有橫跨溪谷的吊橋景觀，橋下即是三光溪匯入大漢溪之處，形成「三龜戲珠」的溪石奇景。如今巴陵也是北台灣重要的溫帶水果產地，每年四、五月水蜜桃花開滿山，暑假則是採收旺季，吸引許多遊客上山賞遊採果，讓這個曾經只是描述巨木倒地的泰雅語地名，成為北橫公路旅遊的重要地標。"],
     ["桃園市","爺亨","Zihing 陽光難照之地","爺亨（泰雅語 Zihing／Ehen）因地形東、南兩側環山，每日上午陽光難以照入，故以此為名，今以梯田與溫泉聞名。","s","爺亨部落位於桃園市復興區三光里，緊鄰玉峰溪與馬里闊灣溪，擁有復興區僅次於角板山的第二大河階台地。關於爺亨地名的由來，目前流傳最廣的說法是源自泰雅語「Zihing」（或寫作Ehen），意指陽光不易照到之地，因為部落東、南兩側都被高聳山頭圍繞，每天要等到接近中午，陽光才會照進谷地，加上森林茂密、雨霧頻繁，此地終年顯得陰涼潮溼。此外還流傳另外兩種說法：一說爺亨意指「溪邊的台地」，描述其地形特徵；另一說則認為當地氣候濕冷，早年溪邊容易滋生水蛭，因此以泰雅語稱水蛭的詞彙音轉而來。儘管擁有廣闊平坦的河階地形，但爺亨溪水礦物質含量偏高，早年不利飲用與大規模農耕，聚落規模因此一直不大，主要部落反而發展在對岸向陽的武道能敢一帶。如今爺亨善用山泉水引灌，開闢出全區最整齊的梯田景觀，曾有「後山穀倉」美稱；附近的巴陵橋溫泉在1997年重新出露後，也以「爺亨溫泉」之名對外開放，成為北橫公路上兼具梯田美景與泡湯體驗的知名景點。"],
@@ -1061,12 +1102,16 @@ function hashColor(str) {
     return [`hsl(${hue},55%,42%)`, `hsl(${(hue+40)%360},60%,58%)`];
 }
 
-function placeholderHTML(item) {
+function placeholderHTML(item, failed, containerId) {
     const [c1, c2] = hashColor(item.c + item.n);
+    const statusLine = failed
+        ? `<div style="font-size:0.72rem;opacity:0.9;margin-top:4px;">⚠️ 圖片讀取失敗，可能是網路不穩定</div>
+           <button onclick="retryImage('${containerId}', ${item.id})" style="margin-top:8px;padding:5px 14px;border-radius:14px;border:1px solid rgba(255,255,255,0.7);background:rgba(255,255,255,0.15);color:#fff;font-size:0.75rem;cursor:pointer;">🔄 重新載入</button>`
+        : `<div style="font-size:0.7rem;opacity:0.8;margin-top:4px;">(單機模式)</div>`;
     return `<div style="width:100%;height:100%;display:flex;flex-direction:column;align-items:center;justify-content:center;background:linear-gradient(135deg, ${c1}, ${c2});color:#fff;">
         <div style="font-size:2.6rem;">📍</div>
         <div style="font-weight:bold;margin-top:8px;padding:0 10px;text-align:center;">${item.c} ${item.n}</div>
-        <div style="font-size:0.7rem;opacity:0.8;margin-top:4px;">(單機模式)</div>
+        ${statusLine}
     </div>`;
 }
 
@@ -1075,12 +1120,22 @@ function loadingHTML() {
 }
 
 // 嘗試抓取維基百科縮圖 (風景照)
+// 圖片快取，避免重複抓取同一筆資料，並提升穩定性
+const imgCache = new Map();
+
+// 帶逾時保護的 fetch，避免網路卡住時畫面一直停在「載入中」
+function fetchWithTimeout(url, options = {}, ms = 6000) {
+    const controller = new AbortController();
+    const timer = setTimeout(() => controller.abort(), ms);
+    return fetch(url, { ...options, signal: controller.signal }).finally(() => clearTimeout(timer));
+}
+
 async function fetchWikiImg(n, c) {
-    const kws = [`${c}${n}`, n, c];
+    const kws = [`${c}${n}`, n, `${n}(${c})`, c];
     for (let k of kws) {
         try {
             const url = `https://zh.wikipedia.org/w/api.php?action=query&titles=${encodeURIComponent(k)}&prop=pageimages&format=json&pithumbsize=500&origin=*`;
-            const res = await fetch(url);
+            const res = await fetchWithTimeout(url, {}, 5000);
             const data = await res.json();
             const pages = data.query.pages;
             const pageId = Object.keys(pages)[0];
@@ -1094,7 +1149,7 @@ async function fetchWikiImg(n, c) {
 async function fetchMapImg(n, c) {
     try {
         const geoUrl = `https://nominatim.openstreetmap.org/search?format=json&limit=1&q=${encodeURIComponent(c + n)}`;
-        const res = await fetch(geoUrl, { headers: { 'Accept-Language': 'zh-TW' } });
+        const res = await fetchWithTimeout(geoUrl, { headers: { 'Accept-Language': 'zh-TW' } }, 5000);
         const arr = await res.json();
         if (arr && arr[0]) {
             const { lat, lon } = arr[0];
@@ -1104,12 +1159,26 @@ async function fetchMapImg(n, c) {
     return null;
 }
 
-// 依設定回傳圖片網址；若設定關閉或抓取失敗則回傳 null (由呼叫端顯示離線插圖)
+// 依設定回傳圖片網址；若設定關閉或抓取失敗則回傳 null (由呼叫端顯示離線插圖)；成功結果會快取，加快下次開啟速度
 async function getImgUrl(item) {
     if (!Settings.netImg) return null;
+    if (imgCache.has(item.id)) return imgCache.get(item.id);
     let url = await fetchWikiImg(item.n, item.c);
     if (!url) url = await fetchMapImg(item.n, item.c);
+    imgCache.set(item.id, url);
     return url;
+}
+
+// 圖片載入逾時保護：若圖片本身遲遲載不出來（而非網址取得失敗），一樣自動退回離線插圖
+function loadImageWithTimeout(url, ms = 7000) {
+    return new Promise((resolve) => {
+        const img = new Image();
+        let done = false;
+        const timer = setTimeout(() => { if (!done) { done = true; resolve(null); } }, ms);
+        img.onload = () => { if (!done) { done = true; clearTimeout(timer); resolve(url); } };
+        img.onerror = () => { if (!done) { done = true; clearTimeout(timer); resolve(null); } };
+        img.src = url;
+    });
 }
 
 // 將圖片放入指定容器；containerId 為 <div> 容器
@@ -1121,17 +1190,26 @@ async function renderImageBox(containerId, item) {
         return;
     }
     box.innerHTML = loadingHTML();
-    const url = await getImgUrl(item);
+    let url = await getImgUrl(item);
+    if (url) url = await loadImageWithTimeout(url);
+    // 若目前顯示中的內容已經因為使用者切換而不再對應這個 item，就不要覆蓋畫面
+    if (!document.getElementById(containerId)) return;
     if (url) {
         const img = document.createElement('img');
         img.alt = item.c + item.n;
-        img.onerror = () => { box.innerHTML = placeholderHTML(item); };
+        img.onerror = () => { imgCache.delete(item.id); box.innerHTML = placeholderHTML(item, true, containerId); };
         img.src = url;
         box.innerHTML = '';
         box.appendChild(img);
     } else {
-        box.innerHTML = placeholderHTML(item);
+        imgCache.delete(item.id);
+        box.innerHTML = placeholderHTML(item, true, containerId);
     }
+}
+
+function retryImage(containerId, itemId) {
+    const item = placesData.find(p => p.id == itemId);
+    if (item) renderImageBox(containerId, item);
 }
 
 // ================= 初始化 =================
@@ -1178,6 +1256,22 @@ function init() {
     document.body.addEventListener('click', () => {
         if (SoundMgr.enabled && SoundMgr.bgm.paused) SoundMgr.bgm.play().catch(() => {});
     }, { once: true });
+}
+
+function startApp() {
+    const splash = document.getElementById('splash-screen');
+    if (splash) {
+        splash.classList.add('hidden');
+        setTimeout(() => splash.remove(), 600);
+    }
+    // 使用者手勢觸發，此時瀏覽器才允許自動播放音樂
+    if (SoundMgr.enabled) {
+        SoundMgr.bgm.play().catch(() => {});
+    }
+    if (SoundMgr.ctx && SoundMgr.ctx.state === 'suspended') {
+        SoundMgr.ctx.resume().catch(() => {});
+    }
+    SoundMgr.play('click');
 }
 
 function labelText(item) { return item.s ? "由來關鍵字" : "古稱"; }
@@ -1690,7 +1784,7 @@ function renderAchievements() {
 
     svg.querySelectorAll('.county-shape, .county-label').forEach(el => {
         el.style.pointerEvents = 'auto';
-        el.onclick = () => showCountyDetail(el.dataset.c);
+        el.onclick = () => goQuizForCounty(el.dataset.c);
     });
 
     mapZoomReset();
